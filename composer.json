@@ -1,7 +1,7 @@
 {
-	"name": "ubidots/ubidots",
+	"name": "laurencehr/ubidots",
 	"description": "Api Client to connect to ubidots.com api version 1.6.",
-	"homepage": "http://github.com/ubidots/ubidots-php",
+	"homepage": "http://github.com/laurencehr/ubidots-php",
 	"license": "MIT",
 	"keywords": ["ubidots", "php", "api"],
 	"authors": [
