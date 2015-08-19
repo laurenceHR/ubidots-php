@@ -1,5 +1,7 @@
 <?php
 namespace Ubidots;
+use Curl\Curl;
+use Exception;
 
 define('BASE_URL', 'http://app.ubidots.com/api/v1.6/'); 
 
@@ -9,9 +11,11 @@ class ServerBridge{
     private $token_header;
     private $apikey;
     private $apikey_header;
+    protected $curl;
 
     public function __construct($apikey=null, $token=null, $base_url = null)
     {
+        $this->curl = new Curl();
         $this->base_url = ($base_url) ? $base_url: BASE_URL; 
         if ($apikey){
             $this->token = null;
@@ -46,15 +50,16 @@ class ServerBridge{
     }
 
     private function post_with_apikey($path){
-        $headers = $this->prepare_headers($this->apikey_header);
-        $request = \Requests::post($this->base_url . $path, $headers);
-        return json_decode($request->body, true);
+        $headers = $this->prepare_headers($this->apikey_header);        
+        $request = $this->curl->post($this->base_url . $path);        
+        if($this->curl->error) throw new Exception("curl error code ".$this->curl->error_code, 1);        
+        return json_decode($this->curl->response, true);
     }
 
     public function get($path){
         $headers = $this->prepare_headers($this->token_header);
-        $request = \Requests::get($this->base_url . $path, $headers);
-        return json_decode($request->body, true);
+        $request = $this->curl->get($this->base_url . $path, $headers);
+        return json_decode($this->curl->response, true);
     }
         
     public function get_with_url($url){
@@ -65,9 +70,10 @@ class ServerBridge{
 
     public function post($path, $data){
         $headers = $this->prepare_headers($this->token_header);
-        $data = $this->prepare_data($data);
-        $request = \Requests::post($this->base_url . $path, $headers, $data);
-        return json_decode($request->body, true);
+        //$data = $this->prepare_data($data);
+        $data_string = json_encode($data);
+        $request = $this->curl->post($this->base_url . $path, $data_string);        
+        return json_decode($this->curl->response, true);
     }
 
     public function delete($path){
@@ -78,7 +84,11 @@ class ServerBridge{
 
     
     private function prepare_headers($headers){
-        return array_merge($headers, $this->get_custom_headers());
+        $h = array_merge($headers, $this->get_custom_headers());
+        foreach($h as $k => $v){
+            $this->curl->setHeader($k,$v);
+        }
+        return $h;
     }
 
     private function prepare_data($data){
